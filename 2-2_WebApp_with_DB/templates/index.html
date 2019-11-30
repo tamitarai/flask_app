@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            ユーザー情報
+        </title>
+    </head>
+
+    <body>
+        <table>
+            <tr>
+                <th></th>
+                <th></th>
+                <th></th>
+            </tr>
+                {% for user in users %}
+            <tr>
+                <td>{{user.username}}</td>
+                <td>{{user.description}}</td>
+                    <!-- 画像のリンク -->
+                    <img src="{{user.user_image_url}}" width="120"/>
+            </tr>
+            {% endfor %}
+        </table>    
+    </body>
+</html>
