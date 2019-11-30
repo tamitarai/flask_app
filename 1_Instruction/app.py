@@ -13,8 +13,30 @@ cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
 # bootstrapで作ったhtmlを表示。「アンサ」をクリックするとrootに飛ぶ。
 @app.route("/",methods=["GET"])
-def bootstrap():
-  return render_template("index.html")
+def index():
+    cur.execute('select * from messages')
+    messages = cur.fetchall()
+    messages = [dict(message) for messages in messages]
+    return render_template("index.html",messages=messages)
+
+@app.route("/post",methods=["GET","POST"])
+def form():
+    if request.method=="GET":
+        return render_template("form.html")
+  
+    elif request.method=="POST":
+        try:
+            # formで入力されたのusernameとmessageをmessagesテーブルに格納する
+            cur.execute("INSERT INTO messages (username,message) values (%s,%s)",
+                (request.form["username"],request.form["message"])
+                )
+            conn.commit()
+            # resultt.htmlにusernameとmessageを渡して画面を組み立てて表示
+            return render_template(
+                "result.html",username=request.form["username"],message=request.form["message"]
+            )
+        except Exception as e:
+          return render_template("error.html")
 
 @app.route("/login",methods=["GET"])
 def render_form():
@@ -43,7 +65,7 @@ def upload_file():
     filepath = 'static/' + secure_filename(f.filename)
     # とりあえずアップロードされたものはローカル保存
     f.save(filepath)
-    return render_template("result.html",name=request.form["name"],image_url=filepath)
+    return render_template("upload_result.html",name=request.form["name"],image_url=filepath)
 
 # 継承の例
 @app.route("/inheritance")
