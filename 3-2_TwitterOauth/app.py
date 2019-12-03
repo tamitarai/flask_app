@@ -62,7 +62,7 @@ class Question(db.Model):
     date_published = db.Column(db.DateTime,default=datetime.utcnow())
     # 外部キー
     user_id = db.Column(db.Integer,db.ForeignKey("user.id"))
-    answer_id = db.Column(db.Integer,db.ForeignKey("user.id"))
+    answerer_id = db.Column(db.Integer,db.ForeignKey("user.id"))
     answer_image_url = db.Column(db.String(1024))
     answer_body = db.Column(db.String(256))
     def __repr__(serlf):
@@ -86,7 +86,7 @@ def logout():
 
 @app.route("/user/<id>")
 def user(id):
-    '''IDを受け取って、そのユーザー情報と質問を返す'''
+    '''URLに含まれるIDを受け取って、そのユーザー情報と質問を返す'''
     user = User.query.get(int(id))
     # もしユーザーがいたら
     if user:
@@ -198,17 +198,14 @@ def oauth_callback():
         # dbのセッションに追加して
         db.session.add(user)
         # 最終的にadd
-        db.session.commit()
-        # このユーザー情報を元にセッションを生成
-        login_user(user,True)
-        # ホームディレトリにリダイレクト
-        return redirect(url_for("index"))
+    db.session.commit()
+    # このユーザー情報を元にセッションを生成
+    login_user(user,True)
+    # ホームディレトリにリダイレクト
+    return redirect(url_for("index"))
 
 # セッションを保持
 # セッション情報とユーザー情報を照合して相違がなければセッションを維持
 @login_manager.user_loader
 def load_user(id): # この引数なんだっけ？
     return User.query.get(int(id))
-
-if __name__ == "main":
-    app.run(debug=True)

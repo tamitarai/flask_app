@@ -16,7 +16,8 @@
     </div>
     <div class="container">
         {% for question in questions %}
-            {% if question.answer_id\int == curren_user.id\int or question.answer_body!=None %}
+            <!--  -->
+            {% if question.answerer_id|int == current_user.id|int or question.answer_body!=None %}
             <div class="row">
                 <div class="col-2 col-sm-1 col-md-1 col-lg-1">
                     <img class ="img-thumbnail" style="min-width:36px" src="{{question.profile_image_url}}"/>
@@ -25,9 +26,52 @@
                     <div class="card text-center">
                         <div class="card-body">
                             <p class="card-text">{{question.body}}</p>
+                            <!-- question.answer_bodyがNoneなら、answer_to/<ID>に飛ばすボタン -->
+                            {% if question.answer_body==None %}
+                            <a href="/answer_to/{{question.id}}" class="btn btn-primary">返信する</a>
+                            {% endif %}
                         </div>
                     </div>
-
+                </div>
             </div>
+            {% endif %}
+            <!-- question.answer_bodyがNone以外なら、返信アイコンを1/12使って表示。残りで質問者のアイコン画像 -->
+            {% if question.answer_body!=None %}
+            <div class="row" style="margin-top:20px">
+                <div class="col-1 col-sm-1 col-md-1 col-lg-1">
+                    <i class="fa fa-reply fa-rotate-90"></i>
+                </div>
+                <div class="col-2 col-sm-1 col-md-1 col-lg-1">
+                    <img class="img-thumbnail" style="min-width:36px;max-width:64px;" src="{{question.answer_image_url}}"/>
+                </div>
+                <div class="col-9 col-sm-10 col-md-10 col-lg-10">
+                    <div class="card text-center">
+                        <div class="card-body">
+                        <p class="card-text">{{question.answer_body}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+        <!-- 質問が無ければ、「まだ質問はないよ」と表示 -->
+        {% if not question or questions|length == 0: %}
+            <h1>まだ質問はありません。新しく質問があれば表示されます。</h1>
+        {% endif %}
+        <!-- 現在のユーザーIDとユーザー.idが一致してなかったら -->
+        {% if current_user.id != user.id %}
+            <h2>{{user.username}}さんに質問を送る</h2>
+            <div class="row" style="margin-top:20px">
+            <div class="col-12">
+            <form action="/question" method="POST">
+            <div class="form-group">
+            <textarea class="form-control" name="body" id="textarea" rows="3"></textarea>
+            <input type="hidden" name="answerer_image_url" value="{{ user.user_image_url }}">
+            <input type="hidden" name="answerer_id" value="{{ user.id }}"/>
+            <button type="submit" class="btn btn-primary">送信する</button>
+            </form>
+            </div>
+            </div>
+        {% endif %}
     </div>
-{% endblock}
+{% endblock %}
