@@ -3,10 +3,15 @@ from datetime import datetime
 from flask import Flask,redirect,url_for,render_template,request,make_response,session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager,UserMixin,logout_user,login_user,login_required,current_user
-from werkzeug.utils import secure_filename
 from flask_migrate import Migrate
+from flask_wtf.csrf import CSRFProtect
+import logging
 from rauth import OAuth1Service
 from requests_oauthlib import OAuth1Session
+from werkzeug.utils import secure_filename
+
+file_handler = logging.FileHandler("log/app.log")
+file_handler.setLevel(logging.WARNING)
 
 API_KEY="vvdDIm6jHCbsAIXtcFF5gL9GE"
 API_SECRET_KEY="JELo09f71nB3pDaKTRex5HN4flvl7g3znNqB7dgnCHOTZGZ4Xq"
@@ -15,6 +20,10 @@ ACESS_TOKEN_SECRET="BpJK1UJyOu59TSJlD483Ulrs6OPljDHxQknsvzEoigkYj"
 
 app_name = __name__ # ファイル名
 app = Flask(app_name) # このインスタンスが本体になる
+# CSRF対策
+csrf = CSRFProtect(app)
+# ログ
+app.logger.addHandler(file_handler)
 # ログイン用のインスタンスを初期化
 login_manager=LoginManager()
 login_manager.init_app(app)
@@ -63,7 +72,7 @@ class Question(db.Model):
     # 外部キー
     user_id = db.Column(db.Integer,db.ForeignKey("user.id"))
     answerer_id = db.Column(db.Integer,db.ForeignKey("user.id"))
-    answer_image_url = db.Column(db.String(1024))
+    answerer_image_url = db.Column(db.String(1024))
     answer_body = db.Column(db.String(256))
     def __repr__(serlf):
         return '<Question %r>'%self.body
@@ -75,6 +84,19 @@ def initdb_command():
 @app.route("/")
 def index():
     return render_template("index.html")
+
+# エラーハンドリング
+# リクエストの際に発生したエラーコードによって表示するページを分ける
+@app.errorhandler(401) # 401エラーが発生したら、401.htmlを表示させる
+def authentication_faild(error):
+    return render_template('401.html'),401
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('404.html'),404
+
+@app.errorhandler(500)
+def page_not_found(error):
+    return render_template('500.html'),500
 
 # ログアウト処理
 @app.route("/logout")
@@ -107,8 +129,8 @@ def question():
             body=request.form["body"],
             profile_image_url=current_user.user_image_url,
             user_id=current_user.id,
-            answerre_image_url=request.form["answer_image_url"],
-            answerer_id=request.form["answerrer_id"]
+            answerer_image_url=request.form["answerer_image_url"],
+            answerer_id=request.form["answerer_id"]
         )
         db.session.add(newQuestion)
         db.session.commit()
@@ -131,7 +153,7 @@ def answer():
     question = db.session.query(Question).filter(Question.id==int(request.form["id"])).first()
     # answer_idとユーザーIDが一致していて、かつanswer_bodyが入力されていたら,
     # とってきた質問のanswer_bodyに投稿されたanswer_bodyを入力する
-    if int(question.answer_id)==int(current_user.id) and request.form["answer_body"]:
+    if int(question.answerer_id)==int(current_user.id) and request.form["answer_body"]:
         question.answer_body = request.form["answer_body"]
         db.session.commit()
         return redirect(url_for("index"))

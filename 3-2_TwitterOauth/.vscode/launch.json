@@ -57,7 +57,8 @@
                 "--no-debugger",
                 "--no-reload"
             ],
-            "jinja": true
+            "jinja": true,
+            "console": "internalConsole"
         },
         {
             "name": "Python: Current File (External Terminal)",
