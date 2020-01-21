@@ -166,7 +166,7 @@ def answer():
 def oauth_authorize():
     # current_userってなんだっけ？
     if not current_user.is_anonymous:
-        # アノニマスならホームディレクトリへリダイレクト
+        # アノニマス以外ならホームディレクトリへリダイレクト
         return redirect(url_for("index"))
     else:
         # リクエストトークンをTwitter APIから取得
